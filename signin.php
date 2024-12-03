@@ -37,7 +37,7 @@
             <div class="small">Forgot password? <a href="forgot_pass.php">Click here</a></div>
 
             <div class="form-group">
-                <button type="submit" class="btn btn-primary btn-block btn-lg">Sign in</button>
+                <button type="submit" class="btn btn-primary btn-block btn-lg" name="sign_in">Sign in</button>
             </div>
             <!-- <?php //include("signin_user.php")?> -->
         </form>
