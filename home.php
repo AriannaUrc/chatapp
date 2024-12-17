@@ -58,7 +58,52 @@
                             $username = $row_user["user_name"];
                             $user_profile_image = $row_user["user_profile"];
                         }
+
+
+                        $total_mesages = "select * from users_chats where (sender_username = '$user_name' AND recevier_username = '$username') OR (receiver_username = '$user_name' AND sender_username = '$username')";
+                        $run_mesages = mysqli_query($con, $total_mesages);
+
+                        $total = mysqli_num_rows($run_mesages);
                     ?>
+                    <div class="col-md-12 right-header">
+                        <div class="right-header-img">
+                            <img src="<?php echo "$user_profile_image";?>" alt="profile image">
+                            <div class="right-header-details">
+                                <form method="POST">
+                                    <p><?php echo $username;?></p>
+                                    <span><?php echo $total; ?> mesages</span> &nbsp; &nbsp;
+                                    <button name="logout" class="btn btn-danger">Logout</button>
+                                </form>
+                                <?php 
+                                if(isset($_POST['logout'])){
+                                    $update_msg = mysqli_query($con, "UPDATE users SET log_in= 'Offline' WHERE user_name = '$user_name'");
+                                    header("Location:logout.php");
+                                    exit();
+                                }
+                                
+                                
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div id="scrolling_to_bottom" class="col-md-12 right-header-contentChat">
+                            <?php 
+                            
+                            $update_msg = mysqli_query($con, "UPDATE users_chats SET msg_status= 'read' WHERE sender_username = '$username' AND receiver_username = '$user_name'");
+
+                            $sel_msg = "select * from user_chats where (sender_username = '$username' AND receiver_username = '$user_name') OR (sender_username = '$user_name' AND receiver_username = '$username') ORDER by 1 ASC";
+                            $run_msg = mysqli_query($con, $sel_msg);
+
+                            while($row = mysqli_fetch_array($run_msg)){
+                                $sender_username = $row['sender_username'];
+                                $receiver_username = $row['receiver_username'];
+                                $msg_content = $row['msg_content'];
+                                $msg_date = $row['msg_date'];
+                            }
+                            ?>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
