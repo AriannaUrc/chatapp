@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Creato il: Dic 03, 2024 alle 11:48
+-- Creato il: Dic 17, 2024 alle 10:54
 -- Versione del server: 10.1.10-MariaDB
 -- Versione PHP: 7.0.2
 
@@ -38,6 +38,21 @@ CREATE TABLE `users` (
   `log_in` varchar(7) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `users_chats`
+--
+
+CREATE TABLE `users_chats` (
+  `msg_id` int(11) NOT NULL,
+  `sender_username` varchar(100) NOT NULL,
+  `recevier_username` varchar(100) NOT NULL,
+  `msg_content` varchar(255) NOT NULL,
+  `msg_status` text NOT NULL,
+  `msg_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 --
 -- Indici per le tabelle scaricate
 --
@@ -49,6 +64,12 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`);
 
 --
+-- Indici per le tabelle `users_chats`
+--
+ALTER TABLE `users_chats`
+  ADD PRIMARY KEY (`msg_id`);
+
+--
 -- AUTO_INCREMENT per le tabelle scaricate
 --
 
@@ -57,6 +78,11 @@ ALTER TABLE `users`
 --
 ALTER TABLE `users`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- AUTO_INCREMENT per la tabella `users_chats`
+--
+ALTER TABLE `users_chats`
+  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
