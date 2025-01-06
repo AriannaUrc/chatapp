@@ -1,77 +1,76 @@
+const WebSocket = require('ws');
 const http = require('http');
 const socketIo = require('socket.io');
-const mysql = require('mysql');
+const cors = require('cors');
 
-// Create an HTTP server
+// Create the server
 const server = http.createServer();
 const io = socketIo(server, {
     cors: {
-        origin: "http://localhost", // Allow connections from your front-end origin
+        origin: "http://localhost",  // The frontend URL (if it's running on a different port)
         methods: ["GET", "POST"],
         allowedHeaders: ["Content-Type"],
-        credentials: true
+        credentials: true  // Allow credentials if needed
     }
 });
 
-// MySQL Database connection
+// Store connected clients
+let users = {};
+
+const mysql = require('mysql2');
+
+// Set up database connection
 const db = mysql.createConnection({
     host: 'localhost',
-    user: 'root', // Replace with your DB username
-    password: '', // Replace with your DB password
-    database: 'mychat' // Replace with your DB name
+    user: 'root',      // Your database username
+    password: '',      // Your database password
+    database: 'mychat' // Your database name
 });
 
-db.connect((err) => {
-    if (err) throw err;
-    console.log('Connected to MySQL database');
-});
-
-// Store user sockets in memory
-let userSockets = {};
-
+// Broadcast and store messages in the database
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Handle user joining chat
+    // Join event to register users by their userId
     socket.on('join', (userId) => {
-        userSockets[userId] = socket.id;
-        console.log(`User ${userId} joined with socket id ${socket.id}`);
+        users[userId] = socket.id;
+        console.log(`User ${userId} connected`);
     });
 
-    // Handle sending messages
+    // Send a message to the receiver
     socket.on('send_message', (data) => {
-        const { sender_id, receiver_id, message } = data;
-        
-        // Save the message to the database
-        const query = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content, msg_status, msg_date) VALUES (?, ?, ?, "unread", NOW())';
-        db.query(query, [sender_id, receiver_id, message], (err, result) => {
-            if (err) throw err;
+        console.log('Received message:', data);
 
-            console.log('Message saved to database');
-            
-            // Broadcast message to the recipient if they are connected
-            if (userSockets[receiver_id]) {
-                io.to(userSockets[receiver_id]).emit('receive_message', {
-                    sender_id,
-                    message
-                });
+        // Insert the message into the database
+        const sql = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content, msg_status) VALUES (?, ?, ?, ?)';
+        db.execute(sql, [data.sender_id, data.receiver_id, data.message, 'unread'], (err, results) => {
+            if (err) {
+                console.error('Error inserting message into DB:', err);
+            } else {
+                console.log('Message saved to DB:', results);
             }
         });
+
+        // Emit the message to the receiver
+        if (users[data.receiver_id]) {
+            io.to(users[data.receiver_id]).emit('receive_message', data);
+            console.log(`Message sent to user ${data.receiver_id}`);
+        }
     });
 
-    // Handle user disconnection
+    // Handle user disconnect
     socket.on('disconnect', () => {
-        for (let userId in userSockets) {
-            if (userSockets[userId] === socket.id) {
-                delete userSockets[userId];
+        for (let userId in users) {
+            if (users[userId] === socket.id) {
+                delete users[userId];
                 break;
             }
         }
-        console.log('A user disconnected');
+        console.log('User disconnected');
     });
 });
 
-// Start the server
-server.listen(3000, () => {
-    console.log('WebSocket server running on http://localhost:3000');
+// Start the WebSocket server on port 8080
+server.listen(8080, () => {
+    console.log('WebSocket server running on ws://localhost:8080');
 });

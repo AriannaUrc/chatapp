@@ -2,7 +2,6 @@
 session_start();
 include("include/connection.php");
 
-// Ensure the user is logged in
 if (!isset($_SESSION["user_id"])) {
     header("Location: signin.php");
     exit();
@@ -10,20 +9,33 @@ if (!isset($_SESSION["user_id"])) {
 
 $user_id = $_SESSION["user_id"];
 
-// Fetch user details
 $get_user = "SELECT * FROM users WHERE user_id = ?";
 $stmt = $con->prepare($get_user);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
-$user_name = $user['user_name'];
-$user_profile_image = $user['user_profile'];
 
-// Get receiver ID (if clicked)
+if ($user) {
+    $user_name = $user['user_name'];
+    $user_profile_image = $user['user_profile'];
+} else {
+    echo "User not found!";
+    exit();
+}
+
 $receiver_id = isset($_GET['receiver_id']) ? $_GET['receiver_id'] : null;
+$messages = [];
 
-// Handle message sending
+if ($receiver_id) {
+    $messages_query = "SELECT * FROM users_chats WHERE (sender_ID = ? AND receiver_ID = ?) OR (sender_ID = ? AND receiver_ID = ?) ORDER BY msg_date ASC";
+    $stmt = $con->prepare($messages_query);
+    $stmt->bind_param("iiii", $user_id, $receiver_id, $receiver_id, $user_id);
+    $stmt->execute();
+    $messages_result = $stmt->get_result();
+    $messages = $messages_result->fetch_all(MYSQLI_ASSOC);
+}
+
 if (isset($_POST['submit'])) {
     $msg = htmlentities($_POST['msg_content']);
     if (!empty($msg) && $receiver_id) {
@@ -32,25 +44,11 @@ if (isset($_POST['submit'])) {
         $stmt->bind_param("iis", $user_id, $receiver_id, $msg);
         $stmt->execute();
         
-        // After message is sent, redirect to avoid re-submission on refresh
         header("Location: home.php?receiver_id=" . $receiver_id);
         exit();
     }
 }
 
-// Fetch messages (show messages between current user and the receiver)
-if ($receiver_id) {
-    $messages_query = "SELECT * FROM users_chats WHERE (sender_ID = ? AND receiver_ID = ?) OR (sender_ID = ? AND receiver_ID = ?) ORDER BY msg_date ASC";
-    $stmt = $con->prepare($messages_query);
-    $stmt->bind_param("iiii", $user_id, $receiver_id, $receiver_id, $user_id);
-    $stmt->execute();
-    $messages_result = $stmt->get_result();
-    $messages = $messages_result->fetch_all(MYSQLI_ASSOC);
-} else {
-    $messages = [];
-}
-
-// Handle logout
 if (isset($_POST['logout'])) {
     session_destroy();
     header("Location: signin.php");
@@ -78,7 +76,6 @@ if (isset($_POST['logout'])) {
                 </div>
                 <div class="left-chat">
                     <?php
-                    // Get list of users except the current user
                     $user_list_query = "SELECT * FROM users WHERE user_id != ?";
                     $stmt = $con->prepare($user_list_query);
                     $stmt->bind_param("i", $user_id);
@@ -106,7 +103,7 @@ if (isset($_POST['logout'])) {
                 </div>
 
                 <div class="right-header-contentChat">
-                    <ul>
+                    <ul id="message-container">
                         <?php foreach ($messages as $message): ?>
                             <div class="rightside-chat">
                                 <span><?php echo $message['sender_ID'] == $user_id ? 'You' : 'User ' . $message['sender_ID']; ?> <small><?php echo $message['msg_date']; ?></small></span>
@@ -117,8 +114,8 @@ if (isset($_POST['logout'])) {
                 </div>
 
                 <div class="right-chat-textbox">
-                    <form method="POST">
-                        <input type="text" name="msg_content" placeholder="Write your message..." required>
+                    <form id="message-form">
+                        <input type="text" id="message-input" name="msg_content" placeholder="Write your message..." required>
                         <button type="submit" name="submit" class="btn btn-primary"><i class="fa fa-telegram"></i> Send</button>
                     </form>
                 </div>
@@ -126,8 +123,45 @@ if (isset($_POST['logout'])) {
         </div>
     </div>
 
+    <!-- Include Socket.io client -->
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-        document.getElementById("scrolling_to_bottom").scrollTop = document.getElementById("scrolling_to_bottom").scrollHeight;
+        const userId = <?php echo $_SESSION['user_id']; ?>;
+        let receiverId = <?php echo isset($_GET['receiver_id']) ? $_GET['receiver_id'] : 'null'; ?>;
+        
+        const socket = io('http://localhost:8080');
+
+        socket.emit('join', userId);
+
+        socket.on('receive_message', (data) => {
+            const messageContainer = document.getElementById('message-container');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `<span>${data.sender_id === userId ? 'You' : 'User ' + data.sender_id}:</span><p>${data.message}</p>`;
+            messageContainer.appendChild(messageElement);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        });
+
+        document.getElementById('message-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const messageContent = document.getElementById('message-input').value;
+            if (messageContent && receiverId) {
+                socket.emit('send_message', {
+                    sender_id: userId,
+                    receiver_id: receiverId,
+                    message: messageContent
+                });
+
+                const messageContainer = document.getElementById('message-container');
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message');
+                messageElement.innerHTML = `<span>You:</span><p>${messageContent}</p>`;
+                messageContainer.appendChild(messageElement);
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+
+                document.getElementById('message-input').value = '';
+            }
+        });
     </script>
 </body>
 </html>
