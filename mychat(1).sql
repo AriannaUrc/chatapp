@@ -1,13 +1,14 @@
 -- phpMyAdmin SQL Dump
--- version 4.5.1
--- http://www.phpmyadmin.net
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Dic 17, 2024 alle 10:54
--- Versione del server: 10.1.10-MariaDB
--- Versione PHP: 7.0.2
+-- Generation Time: Jan 06, 2025 at 02:32 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
 SET time_zone = "+00:00";
 
 
@@ -23,7 +24,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Struttura della tabella `users`
+-- Table structure for table `users`
 --
 
 CREATE TABLE `users` (
@@ -36,53 +37,84 @@ CREATE TABLE `users` (
   `user_gender` text NOT NULL,
   `forgotten_answer` varchar(100) NOT NULL,
   `log_in` varchar(7) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `user_name`, `user_pass`, `user_email`, `user_profile`, `user_country`, `user_gender`, `forgotten_answer`, `log_in`) VALUES
+(1, 'Test_name', '1234', '1234@gmail.com', 'images/pfp1.jpeg', 'au', 'f', '', 'Online'),
+(2, 'User2', '12345678', 'user2@gmail.com', 'images/pfp1.jpeg', 'au', 'f', '', 'Online');
 
 -- --------------------------------------------------------
 
 --
--- Struttura della tabella `users_chats`
+-- Table structure for table `users_chats`
 --
 
 CREATE TABLE `users_chats` (
   `msg_id` int(11) NOT NULL,
-  `sender_username` varchar(100) NOT NULL,
-  `recevier_username` varchar(100) NOT NULL,
+  `sender_ID` int(100) NOT NULL,
+  `receiver_ID` int(100) NOT NULL,
   `msg_content` varchar(255) NOT NULL,
   `msg_status` text NOT NULL,
-  `msg_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  `msg_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
--- Indici per le tabelle scaricate
+-- Dumping data for table `users_chats`
+--
+
+INSERT INTO `users_chats` (`msg_id`, `sender_ID`, `receiver_ID`, `msg_content`, `msg_status`, `msg_date`) VALUES
+(1, 1, 2, 'teeeeeest', 'read', '2025-01-06 13:20:27');
+
+--
+-- Indexes for dumped tables
 --
 
 --
--- Indici per le tabelle `users`
+-- Indexes for table `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`);
 
 --
--- Indici per le tabelle `users_chats`
+-- Indexes for table `users_chats`
 --
 ALTER TABLE `users_chats`
-  ADD PRIMARY KEY (`msg_id`);
+  ADD PRIMARY KEY (`msg_id`),
+  ADD KEY `sender-chat` (`sender_ID`),
+  ADD KEY `receiver-chat` (`receiver_ID`);
 
 --
--- AUTO_INCREMENT per le tabelle scaricate
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT per la tabella `users`
+-- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
 --
--- AUTO_INCREMENT per la tabella `users_chats`
+-- AUTO_INCREMENT for table `users_chats`
 --
 ALTER TABLE `users_chats`
-  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `users_chats`
+--
+ALTER TABLE `users_chats`
+  ADD CONSTRAINT `receiver-chat` FOREIGN KEY (`receiver_ID`) REFERENCES `users` (`user_id`),
+  ADD CONSTRAINT `sender-chat` FOREIGN KEY (`sender_ID`) REFERENCES `users` (`user_id`);
+COMMIT;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

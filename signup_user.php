@@ -11,9 +11,15 @@ if(isset($_POST['sign_up'])){
 
     if($name == ''){
         echo "<script>alert('We couldn't verify your name')</script>";
+        exit();
     }
     if(strlen($pass) < 8){
         echo "<script>alert('The password should be at least 8 characters!')</script>";
+        exit();
+    }
+    if (strpos($name, ' ') !== false) {
+        echo "<script>alert('Username should not contain spaces!')</script>";
+        exit();
     }
 
     // Fix the email check query

@@ -1,4 +1,5 @@
 <?php
+include("include/connection.php");
 
 $con = mysqli_connect("localhost","root","","mychat");
 
@@ -14,13 +15,13 @@ while( $row = mysqli_fetch_array($run_user) ) {
     echo "
         <li>
             <div class='chat-left-img'>
-            <img src='chat_profile'>
+            <img src='$user_profile'>
             </div>
             <div class='chat-left-details'>
-            <p><a href='home.php?user_name=$user_name'>$user_name</p>
+            <p><a href='home.php?user_name=$user_name'>$user_name</a></p>
     ";
 
-    if($login == "Online"){
+    if($login == 'Online'){
         echo "<span><i class='fa fa-circle' aria-hidden='true'>Online</i></span>";
     }
     else{
