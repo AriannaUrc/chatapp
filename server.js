@@ -1,29 +1,28 @@
-const WebSocket = require('ws');
+// Server-side (Node.js and Socket.io)
 const http = require('http');
 const socketIo = require('socket.io');
-const cors = require('cors');
 const mysql = require('mysql2');
 
 // Create the server
 const server = http.createServer();
 const io = socketIo(server, {
     cors: {
-        origin: "*",  // Adjust this based on your frontend URL
+        origin: "*",
         methods: ["GET", "POST"],
         allowedHeaders: ["Content-Type"],
-        credentials: true  // Allow credentials if needed
+        credentials: true
     }
 });
 
-// Store connected users
+// Store connected users by their userId
 let users = {};
 
 // Set up database connection
 const db = mysql.createConnection({
     host: 'localhost',
-    user: 'root',      // Your database username
-    password: '',      // Your database password
-    database: 'mychat' // Your database name
+    user: 'root',
+    password: '',
+    database: 'mychat'
 });
 
 // Error handling for database connection
@@ -68,8 +67,47 @@ io.on('connection', (socket) => {
         });
     });
 
+    // Handle delete message event
+    socket.on('delete_message', (data) => {
+        console.log('Delete message event received:', data);
+
+        // Delete the message from the database
+        const deleteSql = 'DELETE FROM users_chats WHERE msg_id = ?';
+        db.execute(deleteSql, [data.message_id], (err, results) => {
+            if (err) {
+                console.error('Error deleting message from DB:', err);
+                return;
+            }
+            console.log('Message deleted from DB:', results);
+
+            // Emit delete event to the client
+            io.to(users[data.receiver_id]).emit('delete_message', { message_id: data.message_id });
+            io.to(users[data.sender_id]).emit('delete_message', { message_id: data.message_id });
+        });
+    });
+
+    // Handle edit message event
+    socket.on('edit_message', (data) => {
+        console.log('Edit message event received:', data);
+
+        // Update the message in the database
+        const updateSql = 'UPDATE users_chats SET msg_content = ? WHERE msg_id = ?';
+        db.execute(updateSql, [data.new_message, data.message_id], (err, results) => {
+            if (err) {
+                console.error('Error updating message in DB:', err);
+                return;
+            }
+            console.log('Message updated in DB:', results);
+
+            // Emit the updated message to the sender and receiver
+            io.to(users[data.receiver_id]).emit('edit_message', data);
+            io.to(users[data.sender_id]).emit('edit_message', data);
+        });
+    });
+
     // Handle user disconnect
     socket.on('disconnect', () => {
+        // Only remove from `users` when user actually disconnects.
         for (let userId in users) {
             if (users[userId] === socket.id) {
                 delete users[userId];

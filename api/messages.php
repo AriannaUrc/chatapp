@@ -51,25 +51,28 @@ if ($method == 'POST') {
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Missing required data']);
     }
-} elseif ($method == 'PUT') {
-    // Handle updating a message
+} 
+
+// Handle editing a message
+if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $data = json_decode(file_get_contents('php://input'), true);
+
     if (isset($data['message_id'], $data['new_message'])) {
         $message_id = $data['message_id'];
-        $new_message = htmlentities($data['new_message']);
+        $new_message = htmlentities($data['new_message']);  // HTML sanitize
 
         $query = "UPDATE users_chats SET msg_content = ? WHERE message_id = ?";
         $stmt = $con->prepare($query);
         $stmt->bind_param("si", $new_message, $message_id);
-        
+
         if ($stmt->execute()) {
-            // Emit event to Socket.IO server (broadcast message edit)
+            // Notify Socket.IO via HTTP request
             $socket_data = [
                 'message_id' => $message_id,
                 'new_message' => $new_message
             ];
 
-            // Send data to the Socket.IO server via HTTP request
+            // Notify Socket.IO about the update
             $ch = curl_init(SOCKET_SERVER . "/emit-edit");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
@@ -85,21 +88,26 @@ if ($method == 'POST') {
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Missing required data']);
     }
-} elseif ($method == 'DELETE') {
-    // Handle deleting a message
+}
+
+
+// Handle deleting a message
+elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $data = json_decode(file_get_contents('php://input'), true);
+
     if (isset($data['message_id'])) {
         $message_id = $data['message_id'];
 
+        // Delete from the 'users_chats' table
         $query = "DELETE FROM users_chats WHERE message_id = ?";
         $stmt = $con->prepare($query);
         $stmt->bind_param("i", $message_id);
-        
+
         if ($stmt->execute()) {
-            // Emit event to Socket.IO server (broadcast message delete)
+            // Broadcast the delete event to the frontend via Socket.IO
             $socket_data = ['message_id' => $message_id];
 
-            // Send data to the Socket.IO server via HTTP request
+            // Notify Socket.IO via HTTP request
             $ch = curl_init(SOCKET_SERVER . "/emit-delete");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
@@ -110,12 +118,15 @@ if ($method == 'POST') {
 
             echo json_encode(['status' => 'success', 'message' => 'Message deleted successfully']);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to delete message']);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete message from the database']);
         }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Missing required data']);
+        echo json_encode(['status' => 'error', 'message' => 'Missing required message_id']);
     }
-} else {
+
+} 
+
+else {
     echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
 }
 ?>

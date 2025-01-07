@@ -94,16 +94,17 @@ if (isset($_POST['logout'])) {
 
                 <div class="right-header-contentChat">
                     <ul id="message-container">
-                        <?php foreach ($messages as $message): ?>
-                            <div class="rightside-chat" id="message-<?php echo $message['message_id']; ?>">
-                                <span><?php echo $message['sender_ID'] == $user_id ? 'You' : 'User ' . $message['sender_ID']; ?> <small><?php echo $message['msg_date']; ?></small></span>
-                                <p><?php echo $message['msg_content']; ?></p>
-                                <?php if ($message['sender_ID'] == $user_id): ?>
-                                    <button onclick="editMessage(<?php echo $message['message_id']; ?>, '<?php echo $message['msg_content']; ?>')">Edit</button>
-                                    <button onclick="deleteMessage(<?php echo $message['message_id']; ?>)">Delete</button>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
+                    <?php foreach ($messages as $message): ?>
+                        <div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
+                            <span><?php echo $message['sender_ID'] == $user_id ? 'You' : 'User ' . $message['sender_ID']; ?> 
+                                <small><?php echo $message['msg_date']; ?></small></span>
+                            <p class="message-content"><?php echo $message['msg_content']; ?></p>
+                            <?php if ($message['sender_ID'] == $user_id): ?>
+                                <button class="edit-button" onclick="editMessage(<?php echo $message['msg_id']; ?>, '<?php echo addslashes($message['msg_content']); ?>')">Edit</button>
+                                <button class="delete-button" onclick="deleteMessage(<?php echo $message['msg_id']; ?>)">Delete</button>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
                     </ul>
                 </div>
 
@@ -112,6 +113,7 @@ if (isset($_POST['logout'])) {
                         <input type="text" id="message-input" name="msg_content" placeholder="Write your message..." required>
                         <button type="submit" name="submit" class="btn btn-primary"><i class="fa fa-telegram"></i> Send</button>
                     </form>
+                    <div id="edit-notification" style="display:none; color: red;">Editing message: <span id="editing-message-id"></span></div>
                 </div>
             </div>
         </div>
@@ -120,77 +122,81 @@ if (isset($_POST['logout'])) {
     <!-- Include Socket.io client -->
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-    const userId = <?php echo $_SESSION['user_id']; ?>;
-    let receiverId = <?php echo isset($_GET['receiver_id']) ? $_GET['receiver_id'] : 'null'; ?>;
-
+    const userId = <?php echo json_encode($_SESSION['user_id']); ?>;
+    const receiverId = <?php echo isset($_GET['receiver_id']) ? json_encode($_GET['receiver_id']) : 'null'; ?>;
     const socket = io('http://localhost:8080');
-
-    // Emit a 'join' event to the server to join the chat room (based on the user ID)
     socket.emit('join', userId);
 
-    // Listen for incoming messages on the server
+    // Handle receiving a message
     socket.on('receive_message', (data) => {
         if (data.receiver_id === userId) {
             const messageContainer = document.getElementById('message-container');
             const messageElement = document.createElement('div');
             messageElement.classList.add('rightside-chat');
-            messageElement.innerHTML = `<span>User ${data.sender_id}:</span><p>${data.message}</p>`;
+            messageElement.setAttribute('id', 'message-' + data.message_id);
+            messageElement.setAttribute('data-message-id', data.message_id);
+            messageElement.innerHTML = `
+                <span>User ${data.sender_id}: <small>${data.msg_date}</small></span>
+                <p class="message-content">${data.message}</p>
+                ${data.sender_id === userId ? `
+                    <button class="edit-button" onclick="editMessage(${data.message_id}, '${data.message}')">Edit</button>
+                    <button class="delete-button" onclick="deleteMessage(${data.message_id})">Delete</button>
+                ` : ''}
+            `;
             messageContainer.appendChild(messageElement);
-            messageContainer.scrollTop = messageContainer.scrollHeight; // Auto-scroll to the bottom
+            messageContainer.scrollTop = messageContainer.scrollHeight;
         }
     });
 
-    // Handle the message form submission
+    // Send a new message
     document.getElementById('message-form').addEventListener('submit', (e) => {
-        e.preventDefault(); // Prevent default form submission
-        
+        e.preventDefault();
         const messageContent = document.getElementById('message-input').value;
-        
         if (messageContent && receiverId) {
-            // Immediately show the message in the sender's chat interface without edit/delete options
-            const messageContainer = document.getElementById('message-container');
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('rightside-chat');
-            messageElement.innerHTML = `<span>You:</span><p>${messageContent}</p>`;
-            messageContainer.appendChild(messageElement);
-            messageContainer.scrollTop = messageContainer.scrollHeight; // Auto-scroll to the bottom
-
-            // Send the message to the WebSocket server via Socket.IO
             socket.emit('send_message', {
                 sender_id: userId,
                 receiver_id: receiverId,
                 message: messageContent
             });
-
-            // Clear the input field
-            document.getElementById('message-input').value = '';
+            document.getElementById('message-input').value = '';  // Clear input
         }
     });
 
-    // Function to edit a message
-    function editMessage(messageId, currentContent) {
-        const newContent = prompt("Edit your message:", currentContent);
-        if (newContent && newContent !== currentContent) {
-            fetch('api/messages.php', {
-                method: 'POST',
-                body: JSON.stringify({ message_id: messageId, new_content: newContent })
+    // Edit message
+    function editMessage(messageId, currentMessage) {
+        const newMessage = prompt("Edit your message:", currentMessage);
+        if (newMessage && newMessage !== currentMessage) {
+            socket.emit('edit_message', {
+                message_id: messageId,
+                new_message: newMessage,
+                sender_id: userId,
+                receiver_id: receiverId
             });
         }
     }
 
-    // Function to delete a message
+    // Delete message
     function deleteMessage(messageId) {
-        fetch('api/messages.php', {
-            method: 'DELETE',
-            body: JSON.stringify({ message_id: messageId })
-        })
-        .then(() => {
-            const messageElement = document.getElementById(`message-${messageId}`);
-            if (messageElement) {
-                messageElement.remove();
-            }
-        });
+        if (confirm('Are you sure you want to delete this message?')) {
+            socket.emit('delete_message', { message_id: messageId, sender_id: userId, receiver_id: receiverId });
+        }
     }
+
+    // Handle the editing of a message
+    socket.on('edit_message', (data) => {
+        const messageElement = document.getElementById('message-' + data.message_id);
+        if (messageElement) {
+            messageElement.querySelector('.message-content').textContent = data.new_message;
+        }
+    });
+
+    // Handle the deletion of a message
+    socket.on('delete_message', (data) => {
+        const messageElement = document.getElementById('message-' + data.message_id);
+        if (messageElement) {
+            messageElement.remove();
+        }
+    });
     </script>
 </body>
 </html>
