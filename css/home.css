@@ -218,3 +218,13 @@
         display: none;
     }
 }
+
+
+.message button {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.message button:hover {
+    color: red;
+}

@@ -36,21 +36,7 @@ if ($receiver_id) {
     $messages = $messages_result->fetch_all(MYSQLI_ASSOC);
 }
 
-if (isset($_POST['submit'])) {
-    $msg = htmlentities($_POST['msg_content']);
-    if (!empty($msg) && $receiver_id) {
-        $insert_message = "INSERT INTO users_chats (sender_ID, receiver_ID, msg_content, msg_status) VALUES (?, ?, ?, 'unread')";
-        $stmt = $con->prepare($insert_message);
-        $stmt->bind_param("iis", $user_id, $receiver_id, $msg);
-        $stmt->execute();
-        
-        header("Location: home.php?receiver_id=" . $receiver_id);
-        exit();
-    }
-}
-
 if (isset($_POST['logout'])) {
-
     $update_msg = mysqli_query($con, "UPDATE users SET log_in = 'Offline' WHERE user_id ='$user_id'");
     $run_update = mysqli_query($con, $update_msg);
 
@@ -109,9 +95,13 @@ if (isset($_POST['logout'])) {
                 <div class="right-header-contentChat">
                     <ul id="message-container">
                         <?php foreach ($messages as $message): ?>
-                            <div class="rightside-chat">
+                            <div class="rightside-chat" id="message-<?php echo $message['message_id']; ?>">
                                 <span><?php echo $message['sender_ID'] == $user_id ? 'You' : 'User ' . $message['sender_ID']; ?> <small><?php echo $message['msg_date']; ?></small></span>
                                 <p><?php echo $message['msg_content']; ?></p>
+                                <?php if ($message['sender_ID'] == $user_id): ?>
+                                    <button onclick="editMessage(<?php echo $message['message_id']; ?>, '<?php echo $message['msg_content']; ?>')">Edit</button>
+                                    <button onclick="deleteMessage(<?php echo $message['message_id']; ?>)">Delete</button>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </ul>
@@ -130,42 +120,78 @@ if (isset($_POST['logout'])) {
     <!-- Include Socket.io client -->
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-        const userId = <?php echo $_SESSION['user_id']; ?>;
-        let receiverId = <?php echo isset($_GET['receiver_id']) ? $_GET['receiver_id'] : 'null'; ?>;
-        
-        const socket = io('http://localhost:8080');
+    const userId = <?php echo $_SESSION['user_id']; ?>;
+    let receiverId = <?php echo isset($_GET['receiver_id']) ? $_GET['receiver_id'] : 'null'; ?>;
 
-        socket.emit('join', userId);
+    const socket = io('http://localhost:8080');
 
-        socket.on('receive_message', (data) => {
+    // Emit a 'join' event to the server to join the chat room (based on the user ID)
+    socket.emit('join', userId);
+
+    // Listen for incoming messages on the server
+    socket.on('receive_message', (data) => {
+        if (data.receiver_id === userId) {
             const messageContainer = document.getElementById('message-container');
             const messageElement = document.createElement('div');
-            messageElement.classList.add('message');
-            messageElement.innerHTML = `<span>${data.sender_id === userId ? 'You' : 'User ' + data.sender_id}:</span><p>${data.message}</p>`;
+            messageElement.classList.add('rightside-chat');
+            messageElement.innerHTML = `<span>User ${data.sender_id}:</span><p>${data.message}</p>`;
             messageContainer.appendChild(messageElement);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        });
+            messageContainer.scrollTop = messageContainer.scrollHeight; // Auto-scroll to the bottom
+        }
+    });
 
-        document.getElementById('message-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const messageContent = document.getElementById('message-input').value;
-            if (messageContent && receiverId) {
-                socket.emit('send_message', {
-                    sender_id: userId,
-                    receiver_id: receiverId,
-                    message: messageContent
-                });
+    // Handle the message form submission
+    document.getElementById('message-form').addEventListener('submit', (e) => {
+        e.preventDefault(); // Prevent default form submission
+        
+        const messageContent = document.getElementById('message-input').value;
+        
+        if (messageContent && receiverId) {
+            // Immediately show the message in the sender's chat interface without edit/delete options
+            const messageContainer = document.getElementById('message-container');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('rightside-chat');
+            messageElement.innerHTML = `<span>You:</span><p>${messageContent}</p>`;
+            messageContainer.appendChild(messageElement);
+            messageContainer.scrollTop = messageContainer.scrollHeight; // Auto-scroll to the bottom
 
-                const messageContainer = document.getElementById('message-container');
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('message');
-                messageElement.innerHTML = `<span>You:</span><p>${messageContent}</p>`;
-                messageContainer.appendChild(messageElement);
-                messageContainer.scrollTop = messageContainer.scrollHeight;
+            // Send the message to the WebSocket server via Socket.IO
+            socket.emit('send_message', {
+                sender_id: userId,
+                receiver_id: receiverId,
+                message: messageContent
+            });
 
-                document.getElementById('message-input').value = '';
+            // Clear the input field
+            document.getElementById('message-input').value = '';
+        }
+    });
+
+    // Function to edit a message
+    function editMessage(messageId, currentContent) {
+        const newContent = prompt("Edit your message:", currentContent);
+        if (newContent && newContent !== currentContent) {
+            fetch('api/messages.php', {
+                method: 'POST',
+                body: JSON.stringify({ message_id: messageId, new_content: newContent })
+            });
+        }
+    }
+
+    // Function to delete a message
+    function deleteMessage(messageId) {
+        fetch('api/messages.php', {
+            method: 'DELETE',
+            body: JSON.stringify({ message_id: messageId })
+        })
+        .then(() => {
+            const messageElement = document.getElementById(`message-${messageId}`);
+            if (messageElement) {
+                messageElement.remove();
             }
         });
+    }
     </script>
 </body>
 </html>
+
