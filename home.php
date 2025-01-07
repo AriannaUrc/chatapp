@@ -50,6 +50,10 @@ if (isset($_POST['submit'])) {
 }
 
 if (isset($_POST['logout'])) {
+
+    $update_msg = mysqli_query($con, "UPDATE users SET log_in = 'Offline' WHERE user_id ='$user_id'");
+    $run_update = mysqli_query($con, $update_msg);
+
     session_destroy();
     header("Location: signin.php");
     exit();
