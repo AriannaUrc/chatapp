@@ -58,65 +58,83 @@ if (isset($_POST['logout'])) {
 <body>
     <div class="container">
         <div class="row">
-            <div class="col-md-3 col-sm-3 col-xs-12 left-sidebar">
-                <div class="input-group searchbox">
-                    <div class="input-group-btn">
-                        <center><a href="include/find_friends.php"><button class="btn btn-default search-icon" name="search_user" type="submit">Add new user</button></a></center>
+        <div class="left-sidebar">
+            <!-- Add New User by Email -->
+            <div class="input-group searchbox">
+                <form method="POST" action="add_contact.php">
+                    <input type="email" name="email" class="form-control" placeholder="Add new contact by email" required>
+                    <button type="submit" class="btn btn-default search-icon" name="add_contact">Add</button>
+                </form>
+            </div>
+
+            <!-- Display the contact list -->
+            <div class="left-chat">
+                <?php
+                // Fetch contacts (users who are connected with the logged-in user)
+                $user_list_query = "SELECT users.user_id, users.user_name, users.user_profile, users.log_in FROM users 
+                                    INNER JOIN user_contacts ON user_contacts.contact_id = users.user_id
+                                    WHERE user_contacts.user_id = ?";
+                $stmt = $con->prepare($user_list_query);
+                $stmt->bind_param("i", $user_id);
+                $stmt->execute();
+                $user_list_result = $stmt->get_result();
+                
+                while ($user_data = $user_list_result->fetch_assoc()) {
+                    echo "
+                    <div class='user-list-item'>
+                        <div class='user-profile'>
+                            <img src='{$user_data['user_profile']}' alt='Profile Picture' class='user-img'>
+                            <div class='user-info'>
+                                <a href='home.php?receiver_id={$user_data['user_id']}' class='user-name'>{$user_data['user_name']}</a>
+                                <p class='user-status'>{$user_data['log_in']}</p>
+                            </div>
+                        </div>
+                    </div>";
+                }
+                ?>
+            </div>
+        </div>
+
+        <div class="col-md-9 col-sm-9 col-xs-12 right-sidebar">
+            <div class="right-header">
+                <div class="right-header-img">
+                    <img src="<?php echo $user_profile_image; ?>" alt="profile image">
+                    <div class="right-header-detail">
+                        <form method="POST">
+                            <p>Logged in as: <?php echo $user_name; ?></p>
+                            <span><?php echo count($messages); ?> messages</span>
+                            <button name="logout" class="btn btn-danger">Logout</button>
+                        </form>
                     </div>
-                </div>
-                <div class="left-chat">
-                    <?php
-                    $user_list_query = "SELECT * FROM users WHERE user_id != ?";
-                    $stmt = $con->prepare($user_list_query);
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $user_list_result = $stmt->get_result();
-                    while ($user_data = $user_list_result->fetch_assoc()) {
-                        echo "<div class='user-list-item'><a href='home.php?receiver_id=" . $user_data['user_id'] . "'>" . $user_data['user_name'] . "</a></div>";
-                    }
-                    ?>
                 </div>
             </div>
 
-            <div class="col-md-9 col-sm-9 col-xs-12 right-sidebar">
-                <div class="right-header">
-                    <div class="right-header-img">
-                        <img src="<?php echo $user_profile_image; ?>" alt="profile image">
-                        <div class="right-header-detail">
-                            <form method="POST">
-                                <p>Logged in as: <?php echo $user_name; ?></p>
-                                <span><?php echo count($messages); ?> messages</span>
-                                <button name="logout" class="btn btn-danger">Logout</button>
-                            </form>
-                        </div>
+            <div class="right-header-contentChat">
+                <ul id="message-container">
+                <?php foreach ($messages as $message): ?>
+                    <div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
+                        <span><?php echo $message['sender_ID'] == $user_id ? 'You' : 'User ' . $message['sender_ID']; ?> 
+                            <small><?php echo $message['msg_date']; ?></small></span>
+                        <p class="message-content"><?php echo $message['msg_content']; ?></p>
+                        <?php if ($message['sender_ID'] == $user_id): ?>
+                            <button class="edit-button" onclick="editMessage(<?php echo $message['msg_id']; ?>, '<?php echo addslashes($message['msg_content']); ?>')">Edit</button>
+                            <button class="delete-button" onclick="deleteMessage(<?php echo $message['msg_id']; ?>)">Delete</button>
+                        <?php endif; ?>
                     </div>
-                </div>
+                <?php endforeach; ?>
+                </ul>
+            </div>
 
-                <div class="right-header-contentChat">
-                    <ul id="message-container">
-                    <?php foreach ($messages as $message): ?>
-                        <div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
-                            <span><?php echo $message['sender_ID'] == $user_id ? 'You' : 'User ' . $message['sender_ID']; ?> 
-                                <small><?php echo $message['msg_date']; ?></small></span>
-                            <p class="message-content"><?php echo $message['msg_content']; ?></p>
-                            <?php if ($message['sender_ID'] == $user_id): ?>
-                                <button class="edit-button" onclick="editMessage(<?php echo $message['msg_id']; ?>, '<?php echo addslashes($message['msg_content']); ?>')">Edit</button>
-                                <button class="delete-button" onclick="deleteMessage(<?php echo $message['msg_id']; ?>)">Delete</button>
-                            <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
-                    </ul>
-                </div>
+            <div class="right-chat-textbox" style="display: <?php echo isset($receiver_id) ? 'block' : 'none'; ?>;">
+                <form id="message-form" class="message-form">
+                    <input type="text" id="message-input" name="msg_content" placeholder="Write your message..." required>
+                    <button type="submit" name="submit" class="btn btn-primary send-button">
+                        <i class="fa fa-telegram"></i>&#10148;
+                    </button>
+                </form>
+                <div id="edit-notification" style="display:none; color: red;">Editing message: <span id="editing-message-id"></span></div>
+            </div>
 
-                <div class="right-chat-textbox">
-                    <form id="message-form" class="message-form">
-                        <input type="text" id="message-input" name="msg_content" placeholder="Write your message..." required>
-                        <button type="submit" name="submit" class="btn btn-primary send-button">
-                            <i class="fa fa-telegram"></i>&#10148;
-                        </button>
-                    </form>
-                    <div id="edit-notification" style="display:none; color: red;">Editing message: <span id="editing-message-id"></span></div>
-                </div>
 
         </div>
     </div>
