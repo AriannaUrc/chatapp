@@ -82,6 +82,11 @@
     color: #E38968;
 }
 
+.left-sidebar{
+    height: calc(100vh - (27px));
+}
+
+
 .right-sidebar {
     border-left: 2px solid #000;
 }
@@ -136,6 +141,7 @@
     overflow-y: scroll;
     background-color: #fff;
     position: relative;
+    height: calc(100vh - (90px + 100px));
 }
 
 .right-header-contentChat ul li {
@@ -220,11 +226,24 @@
 }
 
 
-.message button {
-    margin-left: 10px;
+.send-button {
+    margin-left: 0px;
     cursor: pointer;
+    padding: 0;
+}
+.message-form {
+    display: flex;            /* Use flexbox for layout */
+    align-items: center;      /* Vertically align items (center them) */
 }
 
-.message button:hover {
-    color: red;
+#message-input {
+    flex-grow: 1;             /* Allow the input to take up remaining space */
+    margin-right: 10px;       /* Space between input and button */
+    padding: 10px;
 }
+
+.send-button {
+    padding: 10px 20px;
+}
+
+

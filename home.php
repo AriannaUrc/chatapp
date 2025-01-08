@@ -109,13 +109,15 @@ if (isset($_POST['logout'])) {
                 </div>
 
                 <div class="right-chat-textbox">
-                    <form id="message-form">
+                    <form id="message-form" class="message-form">
                         <input type="text" id="message-input" name="msg_content" placeholder="Write your message..." required>
-                        <button type="submit" name="submit" class="btn btn-primary"><i class="fa fa-telegram"></i> Send</button>
+                        <button type="submit" name="submit" class="btn btn-primary send-button">
+                            <i class="fa fa-telegram"></i>&#10148;
+                        </button>
                     </form>
                     <div id="edit-notification" style="display:none; color: red;">Editing message: <span id="editing-message-id"></span></div>
                 </div>
-            </div>
+
         </div>
     </div>
 
