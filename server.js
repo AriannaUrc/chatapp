@@ -1,4 +1,3 @@
-// Server-side (Node.js and Socket.io)
 const http = require('http');
 const socketIo = require('socket.io');
 const mysql = require('mysql2');
@@ -55,15 +54,31 @@ io.on('connection', (socket) => {
                 console.error('Error inserting message into DB:', err);
                 return;
             }
+
+            const message_id = results.insertId;  // Get the generated message ID
+            const msg_date = new Date().toLocaleString();  // Current timestamp
+
             console.log('Message saved to DB:', results);
+
+            // Prepare the message to send back to the client with the actual message ID
+            const messageToSend = {
+                message_id,       // The actual message_id from the DB
+                sender_id: data.sender_id,
+                receiver_id: data.receiver_id,
+                message: data.message,
+                msg_date
+            };
 
             // Emit the message to the receiver if they are connected
             if (users[data.receiver_id]) {
                 console.log(`Sending message to user ${data.receiver_id}`);
-                io.to(users[data.receiver_id]).emit('receive_message', data);
+                io.to(users[data.receiver_id]).emit('receive_message', messageToSend);
             } else {
                 console.log(`User ${data.receiver_id} is not connected`);
             }
+
+            // Also send the message to the sender (for immediate UI update)
+            io.to(users[data.sender_id]).emit('receive_message', messageToSend);
         });
     });
 
@@ -100,8 +115,13 @@ io.on('connection', (socket) => {
             console.log('Message updated in DB:', results);
 
             // Emit the updated message to the sender and receiver
-            io.to(users[data.receiver_id]).emit('edit_message', data);
-            io.to(users[data.sender_id]).emit('edit_message', data);
+            const updatedMessage = {
+                message_id: data.message_id,
+                new_message: data.new_message
+            };
+
+            io.to(users[data.receiver_id]).emit('edit_message', updatedMessage);
+            io.to(users[data.sender_id]).emit('edit_message', updatedMessage);
         });
     });
 

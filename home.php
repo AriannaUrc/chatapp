@@ -28,7 +28,7 @@ $receiver_id = isset($_GET['receiver_id']) ? $_GET['receiver_id'] : null;
 $messages = [];
 
 if ($receiver_id) {
-    $messages_query = "SELECT * FROM users_chats WHERE (sender_ID = ? AND receiver_ID = ?) OR (sender_ID = ? AND receiver_ID = ?) ORDER BY msg_date ASC";
+    $messages_query = "SELECT * FROM users_chats WHERE (sender_ID = ? AND receiver_ID = ?) OR (sender_ID = ? AND receiver_ID = ?) ORDER BY msg_id ASC";
     $stmt = $con->prepare($messages_query);
     $stmt->bind_param("iiii", $user_id, $receiver_id, $receiver_id, $user_id);
     $stmt->execute();
@@ -122,82 +122,91 @@ if (isset($_POST['logout'])) {
     <!-- Include Socket.io client -->
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
-    const userId = <?php echo json_encode($_SESSION['user_id']); ?>;
-    const receiverId = <?php echo isset($_GET['receiver_id']) ? json_encode($_GET['receiver_id']) : 'null'; ?>;
-    const socket = io('http://localhost:8080');
-    socket.emit('join', userId);
+// Setup for socket connection
+const socket = io('http://localhost:8080');
+const userId = <?php echo json_encode($_SESSION['user_id']); ?>;
+const receiverId = <?php echo isset($_GET['receiver_id']) ? json_encode($_GET['receiver_id']) : 'null'; ?>;
 
-    // Handle receiving a message
-    socket.on('receive_message', (data) => {
-        if (data.receiver_id === userId) {
-            const messageContainer = document.getElementById('message-container');
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('rightside-chat');
-            messageElement.setAttribute('id', 'message-' + data.message_id);
-            messageElement.setAttribute('data-message-id', data.message_id);
-            messageElement.innerHTML = `
-                <span>User ${data.sender_id}: <small>${data.msg_date}</small></span>
-                <p class="message-content">${data.message}</p>
-                ${data.sender_id === userId ? `
-                    <button class="edit-button" onclick="editMessage(${data.message_id}, '${data.message}')">Edit</button>
-                    <button class="delete-button" onclick="deleteMessage(${data.message_id})">Delete</button>
-                ` : ''}
-            `;
-            messageContainer.appendChild(messageElement);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        }
-    });
+// Join the socket with the userId
+socket.emit('join', userId);
 
-    // Send a new message
-    document.getElementById('message-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const messageContent = document.getElementById('message-input').value;
-        if (messageContent && receiverId) {
-            socket.emit('send_message', {
-                sender_id: userId,
-                receiver_id: receiverId,
-                message: messageContent
-            });
-            document.getElementById('message-input').value = '';  // Clear input
-        }
-    });
+// Send a message
+document.getElementById('message-form').addEventListener('submit', (e) => {
+    e.preventDefault();
 
-    // Edit message
-    function editMessage(messageId, currentMessage) {
-        const newMessage = prompt("Edit your message:", currentMessage);
-        if (newMessage && newMessage !== currentMessage) {
-            socket.emit('edit_message', {
-                message_id: messageId,
-                new_message: newMessage,
-                sender_id: userId,
-                receiver_id: receiverId
-            });
-        }
+    const messageContent = document.getElementById('message-input').value;
+    if (messageContent && receiverId) {
+        // Send the message to the server (no temporary message shown on the client yet)
+        socket.emit('send_message', {
+            sender_id: userId,
+            receiver_id: receiverId,
+            message: messageContent
+        });
+
+        // Clear input
+        document.getElementById('message-input').value = '';
     }
+});
 
-    // Delete message
-    function deleteMessage(messageId) {
-        if (confirm('Are you sure you want to delete this message?')) {
-            socket.emit('delete_message', { message_id: messageId, sender_id: userId, receiver_id: receiverId });
-        }
+// Handle message reception
+socket.on('receive_message', (data) => {
+    const messageContainer = document.getElementById('message-container');
+
+    // Create the message element
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('rightside-chat');
+    messageElement.setAttribute('id', 'message-' + data.message_id);  // Use the actual message_id
+    messageElement.setAttribute('data-message-id', data.message_id);
+
+    messageElement.innerHTML = `
+        <span>${data.sender_id === userId ? 'You' : 'User ' + data.sender_id} <small>${data.msg_date}</small></span>
+        <p class="message-content">${data.message}</p>
+        ${data.sender_id === userId ? `
+            <button class="edit-button" onclick="editMessage(${data.message_id}, '${data.message}')">Edit</button>
+            <button class="delete-button" onclick="deleteMessage(${data.message_id})">Delete</button>
+        ` : ''}
+    `;
+    
+    messageContainer.appendChild(messageElement);
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+});
+
+// Edit message function
+function editMessage(messageId, currentMessage) {
+    const newMessage = prompt("Edit your message:", currentMessage);
+    if (newMessage && newMessage !== currentMessage) {
+        socket.emit('edit_message', {
+            message_id: messageId,
+            new_message: newMessage,
+            sender_id: userId,
+            receiver_id: receiverId
+        });
     }
+}
 
-    // Handle the editing of a message
-    socket.on('edit_message', (data) => {
-        const messageElement = document.getElementById('message-' + data.message_id);
-        if (messageElement) {
-            messageElement.querySelector('.message-content').textContent = data.new_message;
-        }
-    });
+// Delete message function
+function deleteMessage(messageId) {
+    if (confirm('Are you sure you want to delete this message?')) {
+        socket.emit('delete_message', { message_id: messageId, sender_id: userId, receiver_id: receiverId });
+    }
+}
 
-    // Handle the deletion of a message
-    socket.on('delete_message', (data) => {
-        const messageElement = document.getElementById('message-' + data.message_id);
-        if (messageElement) {
-            messageElement.remove();
-        }
-    });
-    </script>
+// Handle edit message update from server
+socket.on('edit_message', (data) => {
+    const messageElement = document.getElementById('message-' + data.message_id);
+    if (messageElement) {
+        messageElement.querySelector('.message-content').textContent = data.new_message;
+    }
+});
+
+// Handle delete message update from server
+socket.on('delete_message', (data) => {
+    const messageElement = document.getElementById('message-' + data.message_id);
+    if (messageElement) {
+        messageElement.remove();
+    }
+});
+</script>
 </body>
 </html>
 
