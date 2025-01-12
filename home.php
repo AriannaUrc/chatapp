@@ -185,8 +185,9 @@ socket.on('receive_message', (data) => {
     messageElement.setAttribute('id', 'message-' + data.message_id);  // Use the actual message_id
     messageElement.setAttribute('data-message-id', data.message_id);
 
+    // Use the sender's username in the message
     messageElement.innerHTML = `
-        <span>${data.sender_id === userId ? 'You' : 'User ' + data.sender_id} <small>${data.msg_date}</small></span>
+        <span>${data.sender_id === userId ? 'You' : data.sender_name} <small>${data.msg_date}</small></span>
         <p class="message-content">${data.message}</p>
         ${data.sender_id === userId ? `
             <button class="edit-button" onclick="editMessage(${data.message_id}, '${data.message}')">Edit</button>
@@ -197,6 +198,7 @@ socket.on('receive_message', (data) => {
     messageContainer.appendChild(messageElement);
     messageContainer.scrollTop = messageContainer.scrollHeight;
 });
+
 
 // Edit message function
 function editMessage(messageId, currentMessage) {

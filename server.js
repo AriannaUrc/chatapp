@@ -43,44 +43,59 @@ io.on('connection', (socket) => {
         console.log(`User ${userId} connected with socket id ${socket.id}`);
     });
 
+
+
     // Send a message to the receiver
     socket.on('send_message', (data) => {
         console.log('Received message:', data);
 
-        // Insert the message into the database
-        const sql = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content) VALUES (?, ?, ?)';
-        db.execute(sql, [data.sender_id, data.receiver_id, data.message], (err, results) => {
+        // Fetch the sender's username from the database
+        const sql = 'SELECT user_name FROM users WHERE user_id = ?';
+        db.execute(sql, [data.sender_id], (err, results) => {
             if (err) {
-                console.error('Error inserting message into DB:', err);
+                console.error('Error fetching sender username:', err);
                 return;
             }
 
-            const message_id = results.insertId;  // Get the generated message ID
-            const msg_date = new Date().toLocaleString();  // Current timestamp
+            const senderName = results[0]?.user_name || 'Unknown User'; // Default to 'Unknown User' if no username is found
 
-            console.log('Message saved to DB:', results);
+            // Insert the message into the database
+            const insertSql = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content) VALUES (?, ?, ?)';
+            db.execute(insertSql, [data.sender_id, data.receiver_id, data.message], (err, results) => {
+                if (err) {
+                    console.error('Error inserting message into DB:', err);
+                    return;
+                }
 
-            // Prepare the message to send back to the client with the actual message ID
-            const messageToSend = {
-                message_id,       // The actual message_id from the DB
-                sender_id: data.sender_id,
-                receiver_id: data.receiver_id,
-                message: data.message,
-                msg_date
-            };
+                const message_id = results.insertId;  // Get the generated message ID
+                const msg_date = new Date().toLocaleString();  // Current timestamp
 
-            // Emit the message to the receiver if they are connected
-            if (users[data.receiver_id]) {
-                console.log(`Sending message to user ${data.receiver_id}`);
-                io.to(users[data.receiver_id]).emit('receive_message', messageToSend);
-            } else {
-                console.log(`User ${data.receiver_id} is not connected`);
-            }
+                console.log('Message saved to DB:', results);
 
-            // Also send the message to the sender (for immediate UI update)
-            io.to(users[data.sender_id]).emit('receive_message', messageToSend);
+                // Prepare the message to send back to the client with the actual message ID
+                const messageToSend = {
+                    message_id,       // The actual message_id from the DB
+                    sender_id: data.sender_id,
+                    sender_name: senderName,  // Add the sender's username
+                    receiver_id: data.receiver_id,
+                    message: data.message,
+                    msg_date
+                };
+
+                // Emit the message to the receiver if they are connected
+                if (users[data.receiver_id]) {
+                    console.log(`Sending message to user ${data.receiver_id}`);
+                    io.to(users[data.receiver_id]).emit('receive_message', messageToSend);
+                } else {
+                    console.log(`User ${data.receiver_id} is not connected`);
+                }
+
+                // Also send the message to the sender (for immediate UI update)
+                io.to(users[data.sender_id]).emit('receive_message', messageToSend);
+            });
         });
     });
+
 
     // Handle delete message event
     socket.on('delete_message', (data) => {
