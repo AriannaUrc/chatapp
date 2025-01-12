@@ -238,7 +238,7 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
     }
 
 
-    if (messageContent && receiverId) {
+    if ((messageContent || fileName != "no1") && receiverId) {
         // Send the message to the server (no temporary message shown on the client yet)
         socket.emit('send_message', {
             sender_id: userId,
@@ -265,9 +265,25 @@ socket.on('receive_message', (data) => {
     messageElement.setAttribute('id', 'message-' + data.message_id);  // Use the actual message_id
     messageElement.setAttribute('data-message-id', data.message_id);
 
-    // Use the sender's username in the message
+    // Get the current URL path (JavaScript)
+    const currentUrl = window.location.pathname;  // This will give you the path from the URL, e.g., "/chatapp/home.php"
+    const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));  // Remove the filename to get the base path
+
+    // Construct the full path to the image
+    const imageUrl = baseUrl + '/uploads/' + data.img;
+
+    // Initialize tmp to an empty string
+    let tmp = '';
+
+    // Check if the image should be displayed
+    if (data.img !== "no" && data.img !== "no1") {
+        tmp = `<br><img id="message-img" src="${imageUrl}" style="max-width: 200px; margin-top: 10px; border: 1px solid #ccc; padding: 5px;"><br>`;
+    }
+
+    // Use the sender's username and message content in the message element
     messageElement.innerHTML = `
-        <span>${data.sender_id === userId ? 'You' : data.sender_name} <small>${data.msg_date}</small></span>
+        <hr><br><span>${data.sender_id === userId ? 'You' : data.sender_name} <small>${data.msg_date}</small></span>
+        ${tmp}
         <p class="message-content">${data.message}</p>
         ${data.sender_id === userId ? `
             <button class="edit-button" onclick="editMessage(${data.message_id}, '${data.message}')">Edit</button>
@@ -275,9 +291,11 @@ socket.on('receive_message', (data) => {
         ` : ''}
     `;
     
+    // Append the new message to the container and scroll to the bottom
     messageContainer.appendChild(messageElement);
     messageContainer.scrollTop = messageContainer.scrollHeight;
 });
+
 
 
 // Edit message function

@@ -100,6 +100,7 @@ io.on('connection', (socket) => {
                     sender_name: senderName,  // Add the sender's username
                     receiver_id: data.receiver_id,
                     message: data.message,
+                    img: data.img,
                     msg_date
                 };
 
