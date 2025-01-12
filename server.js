@@ -3,6 +3,7 @@ const socketIo = require('socket.io');
 const mysql = require('mysql2');
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 // Create the express app
 const app = express();
@@ -56,6 +57,13 @@ db.connect((err) => {
     console.log('Connected to MySQL database');
 });
 
+function wait(milliseconds) {
+    const start = Date.now();
+    while (Date.now() - start < milliseconds) {
+        // busy-wait loop, effectively blocks the execution
+    }
+}
+
 // Broadcast and store messages in the database
 io.on('connection', (socket) => {
     console.log('A user connected');
@@ -64,6 +72,30 @@ io.on('connection', (socket) => {
     socket.on('join', (userId) => {
         users[userId] = socket.id;
         console.log(`User ${userId} connected with socket id ${socket.id}`);
+    });
+
+    socket.on('upload_file', (data) => {
+        // Get the file name and the base64 image data
+        const fileName = data.name;
+        const base64Data = data.img_base64.replace(/^data:image\/\w+;base64,/, ''); // Clean the base64 string if it includes the mime type
+    
+        // Create the path for the file
+        const filePath = path.join(__dirname, 'uploads', fileName);
+    
+        // Convert the base64 data to a buffer
+        const buffer = Buffer.from(base64Data, 'base64');
+    
+        // Write the buffer to the uploads folder
+        fs.writeFile(filePath, buffer, (err) => {
+            if (err) {
+                console.error('Error saving the file:', err);
+                // Handle the error accordingly (e.g., send a response to the client)
+            } else {
+                console.log('File successfully saved!');
+                // Optionally, send a confirmation back to the client
+                socket.emit('file_uploaded', { success: true, fileName });
+            }
+        });
     });
 
     // Send a message to the receiver
@@ -100,7 +132,7 @@ io.on('connection', (socket) => {
                     sender_name: senderName,  // Add the sender's username
                     receiver_id: data.receiver_id,
                     message: data.message,
-                    img: data.img,
+                    img: data,
                     msg_date
                 };
 
@@ -112,6 +144,7 @@ io.on('connection', (socket) => {
                     console.log(`User ${data.receiver_id} is not connected`);
                 }
 
+                wait(100);
                 // Also send the message to the sender (for immediate UI update)
                 io.to(users[data.sender_id]).emit('receive_message', messageToSend);
             });

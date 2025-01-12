@@ -227,36 +227,65 @@ fileInput.addEventListener('change', function(event) {
 // Join the socket with the userId
 socket.emit('join', userId);
 
-// Send a message
+// Add event listener for form submission
 document.getElementById('message-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+    e.preventDefault();  // Prevent form from submitting and reloading the page
 
     const messageContent = document.getElementById('message-input').value;
 
-    if (typeof fileName === "undefined") {
-        fileName = "no";
+    // If no content and no file selected, don't send
+    if (!messageContent && fileName === "no1") {
+        return;
     }
 
+    // If file is selected, set its filename
+    const fileInput = document.getElementById('message-file');
+    const file = fileInput.files[0];
 
-    if ((messageContent || fileName != "no1") && receiverId) {
-        // Send the message to the server (no temporary message shown on the client yet)
-        socket.emit('send_message', {
-            sender_id: userId,
-            receiver_id: receiverId,
-            message: messageContent,
-            img: fileName
-        });
-
-        // Clear input
-        document.getElementById('message-input').value = '';
-        imagePreview.src = ''; // Clear the image preview
-        imagePreviewContainer.style.display = 'none'; // Hide the preview container
-        fileInput.value = ''; // Clear the file input
+    if (file) {
+        fileName = file.name;  // Update the file name if a file is selected
     }
+
+    // Emit the message along with the file (if any)
+    socket.emit('send_message', {
+        sender_id: userId,
+        receiver_id: receiverId,
+        message: messageContent,
+        img: fileName // Will be used for the file name
+    });
+
+    // If a file is selected, send it via a separate socket event
+    if (file) {
+        const reader = new FileReader();
+        reader.onloadend = function () {
+            const base64Image = reader.result; // Base64 encoded string of the image
+
+            // Emit the file upload event
+            socket.emit('upload_file', {
+                name: file.name,          // The filename of the image
+                img_base64: base64Image   // The Base64-encoded image data
+            });
+        };
+        reader.readAsDataURL(file);  // Convert the file to Base64
+    }
+
+    // Clear input fields and image preview
+    document.getElementById('message-input').value = '';
+    document.getElementById('message-file').value = '';
+    imagePreview.src = ''; // Clear the image preview
+    imagePreviewContainer.style.display = 'none'; // Hide the preview container
 });
+
+function wait(milliseconds) {
+    const start = Date.now();
+    while (Date.now() - start < milliseconds) {
+        // busy-wait loop, effectively blocks the execution
+    }
+}
 
 // Handle message reception
 socket.on('receive_message', (data) => {
+    
     const messageContainer = document.getElementById('message-container');
 
     // Create the message element
@@ -271,6 +300,8 @@ socket.on('receive_message', (data) => {
 
     // Construct the full path to the image
     const imageUrl = baseUrl + '/uploads/' + data.img;
+
+    console.log(data.img)
 
     // Initialize tmp to an empty string
     let tmp = '';
