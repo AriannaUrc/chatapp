@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Gen 08, 2025 alle 11:52
--- Versione del server: 10.4.32-MariaDB
--- Versione PHP: 8.2.12
+-- Generation Time: Jan 12, 2025 at 07:33 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,7 +24,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Struttura della tabella `users`
+-- Table structure for table `users`
 --
 
 CREATE TABLE `users` (
@@ -40,18 +40,17 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
--- Dump dei dati per la tabella `users`
+-- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`user_id`, `user_name`, `user_pass`, `user_email`, `user_profile`, `user_country`, `user_gender`, `forgotten_answer`, `log_in`) VALUES
-(1, 'Test_name', '1234', '1234@gmail.com', 'images/pfp1.jpeg', 'au', 'f', '', 'Online'),
-(2, 'User2', '12345678', 'user2@gmail.com', 'images/pfp1.jpeg', 'au', 'f', '', 'Online'),
-(3, 'User3', '12345678', 'user3@gmail.com', 'images/pfp2.jpeg', 'it', 'm', '', 'Online');
+(4, 'Tom', '$2y$10$Q.zS0LVOV5llARwBg/.AsublySfGZFKh7Mll3AfmOAlRfY1hWncIu', '4@gmail.com', 'images/pfp3.jpeg', 'za', 'm', '', 'Online'),
+(5, 'Bob', '$2y$10$vGgLHW2Exw4PX1QI3Mg3j.6sQmePedClaOLyO0pJ642EiOxgKqzVi', '1@gmail.com', 'images/pfp1.jpeg', 'it', 'f', '', 'Online');
 
 -- --------------------------------------------------------
 
 --
--- Struttura della tabella `users_chats`
+-- Table structure for table `users_chats`
 --
 
 CREATE TABLE `users_chats` (
@@ -59,33 +58,31 @@ CREATE TABLE `users_chats` (
   `sender_ID` int(100) NOT NULL,
   `receiver_ID` int(100) NOT NULL,
   `msg_content` varchar(255) NOT NULL,
-  `msg_status` text NOT NULL,
+  `msg_image` varchar(255) DEFAULT NULL,
   `msg_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
--- Dump dei dati per la tabella `users_chats`
+-- Dumping data for table `users_chats`
 --
 
-INSERT INTO `users_chats` (`msg_id`, `sender_ID`, `receiver_ID`, `msg_content`, `msg_status`, `msg_date`) VALUES
-(2, 1, 2, 'so now it should be right?', 'unread', '2025-01-08 09:32:58'),
-(3, 2, 1, 'are you looking at the modified date?', 'unread', '2025-01-08 09:32:01'),
-(4, 1, 2, 'do you really work?', 'unread', '2025-01-08 09:38:51'),
-(5, 1, 2, 'you sure?', 'unread', '2025-01-08 09:38:58'),
-(6, 1, 2, 'why arent you working!!', 'unread', '2025-01-08 09:40:22'),
-(7, 1, 2, 'idkk', 'unread', '2025-01-08 09:45:46'),
-(8, 2, 1, 'do you now work??', 'unread', '2025-01-08 09:49:26'),
-(9, 1, 2, 'maybe', 'unread', '2025-01-08 09:52:11'),
-(11, 2, 1, 'it works!!!', 'unread', '2025-01-08 09:54:53'),
-(12, 3, 2, 'Hi', 'unread', '2025-01-08 10:07:04'),
-(13, 1, 2, 'heyyy', 'unread', '2025-01-08 10:08:00'),
-(14, 2, 1, 'i need to fill up space', 'unread', '2025-01-08 10:15:02'),
-(15, 2, 1, 'okkkk', 'unread', '2025-01-08 10:17:43');
+INSERT INTO `users_chats` (`msg_id`, `sender_ID`, `receiver_ID`, `msg_content`, `msg_image`, `msg_date`) VALUES
+(1, 4, 5, 'test', NULL, '2025-01-12 17:06:18'),
+(2, 5, 4, 'test1', NULL, '2025-01-12 17:41:58'),
+(3, 4, 5, 'yes', NULL, '2025-01-12 17:42:04'),
+(4, 5, 4, 'yep', NULL, '2025-01-12 17:48:42'),
+(5, 4, 5, 'yepp', NULL, '2025-01-12 17:48:52'),
+(6, 4, 5, 'ok', NULL, '2025-01-12 17:53:14'),
+(7, 5, 4, 'ok?', NULL, '2025-01-12 17:53:26'),
+(8, 4, 5, 'yeah', NULL, '2025-01-12 17:58:10'),
+(9, 5, 4, 'so you are useless?', NULL, '2025-01-12 17:58:21'),
+(10, 5, 4, 'hello', NULL, '2025-01-12 18:16:25'),
+(11, 4, 5, 'arriva?', NULL, '2025-01-12 18:16:41');
 
 -- --------------------------------------------------------
 
 --
--- Struttura della tabella `user_contacts`
+-- Table structure for table `user_contacts`
 --
 
 CREATE TABLE `user_contacts` (
@@ -94,17 +91,25 @@ CREATE TABLE `user_contacts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Indici per le tabelle scaricate
+-- Dumping data for table `user_contacts`
+--
+
+INSERT INTO `user_contacts` (`contact_id`, `user_id`) VALUES
+(5, 4),
+(4, 5);
+
+--
+-- Indexes for dumped tables
 --
 
 --
--- Indici per le tabelle `users`
+-- Indexes for table `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`);
 
 --
--- Indici per le tabelle `users_chats`
+-- Indexes for table `users_chats`
 --
 ALTER TABLE `users_chats`
   ADD PRIMARY KEY (`msg_id`),
@@ -112,7 +117,7 @@ ALTER TABLE `users_chats`
   ADD KEY `receiver-chat` (`receiver_ID`);
 
 --
--- Indici per le tabelle `user_contacts`
+-- Indexes for table `user_contacts`
 --
 ALTER TABLE `user_contacts`
   ADD PRIMARY KEY (`user_id`,`contact_id`),
@@ -120,34 +125,34 @@ ALTER TABLE `user_contacts`
   ADD KEY `contact_id` (`contact_id`);
 
 --
--- AUTO_INCREMENT per le tabelle scaricate
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT per la tabella `users`
+-- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT per la tabella `users_chats`
+-- AUTO_INCREMENT for table `users_chats`
 --
 ALTER TABLE `users_chats`
-  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `msg_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
--- Limiti per le tabelle scaricate
+-- Constraints for dumped tables
 --
 
 --
--- Limiti per la tabella `users_chats`
+-- Constraints for table `users_chats`
 --
 ALTER TABLE `users_chats`
   ADD CONSTRAINT `receiver-chat` FOREIGN KEY (`receiver_ID`) REFERENCES `users` (`user_id`),
   ADD CONSTRAINT `sender-chat` FOREIGN KEY (`sender_ID`) REFERENCES `users` (`user_id`);
 
 --
--- Limiti per la tabella `user_contacts`
+-- Constraints for table `user_contacts`
 --
 ALTER TABLE `user_contacts`
   ADD CONSTRAINT `user_contacts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
