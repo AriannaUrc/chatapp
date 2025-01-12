@@ -1,9 +1,16 @@
 const http = require('http');
 const socketIo = require('socket.io');
 const mysql = require('mysql2');
+const express = require('express');
+const path = require('path');
 
-// Create the server
-const server = http.createServer();
+// Create the express app
+const app = express();
+
+// Now, create the server (with app passed in as argument)
+const server = http.createServer(app);
+
+// Set up socket.io after the server is initialized
 const io = socketIo(server, {
     cors: {
         origin: "*",
@@ -24,6 +31,22 @@ const db = mysql.createConnection({
     database: 'mychat'
 });
 
+// Serve static files from the "uploads" folder
+// Serve static files dynamically from the "uploads" folder
+app.get('/uploads/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, 'uploads', filename);
+
+    // Check if the file exists before serving it
+    fs.exists(filePath, (exists) => {
+        if (exists) {
+            res.sendFile(filePath); // Serve the file
+        } else {
+            res.status(404).send('File not found');
+        }
+    });
+});
+
 // Error handling for database connection
 db.connect((err) => {
     if (err) {
@@ -42,8 +65,6 @@ io.on('connection', (socket) => {
         users[userId] = socket.id;
         console.log(`User ${userId} connected with socket id ${socket.id}`);
     });
-
-
 
     // Send a message to the receiver
     socket.on('send_message', (data) => {
@@ -95,7 +116,6 @@ io.on('connection', (socket) => {
             });
         });
     });
-
 
     // Handle delete message event
     socket.on('delete_message', (data) => {

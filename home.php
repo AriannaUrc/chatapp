@@ -28,7 +28,7 @@ $receiver_id = isset($_GET['receiver_id']) ? $_GET['receiver_id'] : null;
 $messages = [];
 
 if ($receiver_id) {
-    $messages_query = "SELECT uc.msg_id, uc.sender_ID, uc.receiver_ID, uc.msg_content, uc.msg_image, uc.msg_date,
+    $messages_query = "SELECT uc.msg_id, uc.sender_ID, uc.receiver_ID, uc.msg_content, uc.msg_image, uc.msg_date, 
                  u1.user_name AS sender_name, u2.user_name AS receiver_name
           FROM users_chats uc
           JOIN users u1 ON uc.sender_ID = u1.user_id
@@ -119,9 +119,22 @@ if (isset($_POST['logout'])) {
             <div class="right-header-contentChat">
                 <ul id="message-container">
                 <?php foreach ($messages as $message): ?>
-                    <div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
+                    <hr><br><div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
                         <span><?php echo $message['sender_ID'] == $user_id ? 'You' : $message['sender_name']; ?> 
                             <small><?php echo $message['msg_date']; ?></small></span>
+                        <?php // Get the document root of the web server
+                            // Get the current URL path
+                            $currentUrl = $_SERVER['REQUEST_URI'];  // Example: "/chatapp/home.php?receiver_id=1"
+
+                            // Remove the filename to get the base path
+                            $baseUrl = dirname($currentUrl);  // This will give you the folder path
+
+                            // Then construct the full path to the image
+                            $imageUrl = $baseUrl . '/uploads/' . $message['msg_image'];
+                            if($message['msg_image'] != "no" && $message['msg_image'] != "no1")
+                            echo '<br><img id="message-img" src="' . $imageUrl . '" style="max-width: 200px; margin-top: 10px; border: 1px solid #ccc; padding: 5px;"><br>';
+
+                        ?>
                         <p class="message-content"><?php echo $message['msg_content']; ?></p>
                         <?php if ($message['sender_ID'] == $user_id): ?>
                             <button class="edit-button" onclick="editMessage(<?php echo $message['msg_id']; ?>, '<?php echo addslashes($message['msg_content']); ?>')">Edit</button>
