@@ -147,12 +147,8 @@ if (isset($_POST['logout'])) {
             <div class="right-chat-textbox" style="display: <?php echo isset($receiver_id) ? 'block' : 'none'; ?>;">
             <form id="message-form" class="message-form">
                 <input type="text" id="message-input" name="msg_content" placeholder="Write your message...">
-                
                 <label for="message-file" class="file-label">Img</label>
                 <input type="file" id="message-file" name="message-file" class="file-input" accept="image/*">
-                
-                
-                
                 <button type="submit" name="submit" class="btn btn-primary send-button">
                     <i class="fa fa-telegram"></i>&#10148;
                 </button>
@@ -204,6 +200,16 @@ removeImageButton.addEventListener('click', function() {
 const socket = io('http://localhost:8080');
 const userId = <?php echo json_encode($_SESSION['user_id']); ?>;
 const receiverId = <?php echo isset($_GET['receiver_id']) ? json_encode($_GET['receiver_id']) : 'null'; ?>;
+var fileName = "no1";
+
+// Add an event listener to handle the file selection
+fileInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];  // Get the first selected file
+    console.log("its loading something!!!");
+    if (file) {
+        fileName = file.name;  // Get the file name (e.g., "image.jpg")
+    }
+});
 
 // Join the socket with the userId
 socket.emit('join', userId);
@@ -213,16 +219,26 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
     e.preventDefault();
 
     const messageContent = document.getElementById('message-input').value;
+
+    if (typeof fileName === "undefined") {
+        fileName = "no";
+    }
+
+
     if (messageContent && receiverId) {
         // Send the message to the server (no temporary message shown on the client yet)
         socket.emit('send_message', {
             sender_id: userId,
             receiver_id: receiverId,
-            message: messageContent
+            message: messageContent,
+            img: fileName
         });
 
         // Clear input
         document.getElementById('message-input').value = '';
+        imagePreview.src = ''; // Clear the image preview
+        imagePreviewContainer.style.display = 'none'; // Hide the preview container
+        fileInput.value = ''; // Clear the file input
     }
 });
 

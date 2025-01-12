@@ -60,8 +60,8 @@ io.on('connection', (socket) => {
             const senderName = results[0]?.user_name || 'Unknown User'; // Default to 'Unknown User' if no username is found
 
             // Insert the message into the database
-            const insertSql = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content) VALUES (?, ?, ?)';
-            db.execute(insertSql, [data.sender_id, data.receiver_id, data.message], (err, results) => {
+            const insertSql = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content, msg_image) VALUES (?, ?, ?, ?)';
+            db.execute(insertSql, [data.sender_id, data.receiver_id, data.message, data.img], (err, results) => {
                 if (err) {
                     console.error('Error inserting message into DB:', err);
                     return;
