@@ -130,25 +130,76 @@ if (isset($_POST['logout'])) {
                     </div>
                 <?php endforeach; ?>
                 </ul>
+            
+
+            <!-- Image preview container -->
+            <div id="image-preview-container" style="display: none; position: relative; margin-top: 10px;">
+                    <img id="image-preview" src="" alt="Image preview" style="max-width: 200px; margin-top: 10px; border: 1px solid #ccc; padding: 5px;">
+                    <!-- Close button (X) -->
+                    <button type="button" id="remove-image" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; padding: 5px; font-size: 12px;">
+                        X
+                    </button>
+                </div>
             </div>
+            
+            
 
             <div class="right-chat-textbox" style="display: <?php echo isset($receiver_id) ? 'block' : 'none'; ?>;">
-                <form id="message-form" class="message-form">
-                    <input type="text" id="message-input" name="msg_content" placeholder="Write your message..." required>
-                    <button type="submit" name="submit" class="btn btn-primary send-button">
-                        <i class="fa fa-telegram"></i>&#10148;
-                    </button>
-                </form>
-                <div id="edit-notification" style="display:none; color: red;">Editing message: <span id="editing-message-id"></span></div>
+            <form id="message-form" class="message-form">
+                <input type="text" id="message-input" name="msg_content" placeholder="Write your message...">
+                
+                <label for="message-file" class="file-label">Img</label>
+                <input type="file" id="message-file" name="message-file" class="file-input" accept="image/*">
+                
+                
+                
+                <button type="submit" name="submit" class="btn btn-primary send-button">
+                    <i class="fa fa-telegram"></i>&#10148;
+                </button>
+            </form>
             </div>
-
-
         </div>
     </div>
+<script>
+// Get references to the input, image preview elements, and the close button
+const fileInput = document.getElementById('message-file');
+const imagePreviewContainer = document.getElementById('image-preview-container');
+const imagePreview = document.getElementById('image-preview');
+const removeImageButton = document.getElementById('remove-image');
 
-    <!-- Include Socket.io client -->
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script>
+// Add event listener to the file input to handle file selection
+fileInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        
+        // Set up the reader to display the image once it's loaded
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreviewContainer.style.display = 'block'; // Show the preview container
+        };
+        
+        // Read the selected file as a data URL (base64 string)
+        reader.readAsDataURL(file);
+    } else {
+        // If the selected file is not an image, hide the preview container
+        imagePreviewContainer.style.display = 'none';
+    }
+});
+
+// Add event listener to the remove button to clear the image preview
+removeImageButton.addEventListener('click', function() {
+    imagePreview.src = ''; // Clear the image preview
+    imagePreviewContainer.style.display = 'none'; // Hide the preview container
+    fileInput.value = ''; // Clear the file input
+});
+</script>
+
+<!-- Include Socket.io client -->
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+<script>
 // Setup for socket connection
 const socket = io('http://localhost:8080');
 const userId = <?php echo json_encode($_SESSION['user_id']); ?>;
