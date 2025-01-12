@@ -7,7 +7,7 @@ if(isset($_POST['sign_up'])){
     $email = htmlentities(mysqli_real_escape_string($con, $_POST['user_email']));
     $country = htmlentities(mysqli_real_escape_string($con, $_POST['user_country']));
     $gender = htmlentities(mysqli_real_escape_string($con, $_POST['user_gender']));
-    $rand = rand(1,2);
+    $rand = rand(1,3);
 
     if($name == ''){
         echo "<script>alert('We couldn't verify your name')</script>";
@@ -32,14 +32,19 @@ if(isset($_POST['sign_up'])){
         exit();
     }
 
+    // Hash the password before storing
+    $hashed_pass = password_hash($pass, PASSWORD_DEFAULT);
+
     // Fix the profile picture assignment
     if($rand == 1)
         $profile_pic = "images/pfp1.jpeg";
     elseif($rand == 2)
         $profile_pic = "images/pfp2.jpeg";
+    elseif($rand == 3)
+        $profile_pic = "images/pfp3.jpeg";
 
     // Fix the insert query
-    $insert = "insert into users (user_name, user_pass, user_email, user_profile, user_country, user_gender) values('$name', '$pass', '$email', '$profile_pic', '$country', '$gender')";
+    $insert = "insert into users (user_name, user_pass, user_email, user_profile, user_country, user_gender) values('$name', '$hashed_pass', '$email', '$profile_pic', '$country', '$gender')";
     
     $query = mysqli_query($con, $insert);
     if($query){
