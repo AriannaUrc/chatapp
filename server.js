@@ -48,8 +48,8 @@ io.on('connection', (socket) => {
         console.log('Received message:', data);
 
         // Insert the message into the database
-        const sql = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content, msg_status) VALUES (?, ?, ?, ?)';
-        db.execute(sql, [data.sender_id, data.receiver_id, data.message, 'unread'], (err, results) => {
+        const sql = 'INSERT INTO users_chats (sender_ID, receiver_ID, msg_content) VALUES (?, ?, ?)';
+        db.execute(sql, [data.sender_id, data.receiver_id, data.message], (err, results) => {
             if (err) {
                 console.error('Error inserting message into DB:', err);
                 return;

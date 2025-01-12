@@ -28,7 +28,14 @@ $receiver_id = isset($_GET['receiver_id']) ? $_GET['receiver_id'] : null;
 $messages = [];
 
 if ($receiver_id) {
-    $messages_query = "SELECT * FROM users_chats WHERE (sender_ID = ? AND receiver_ID = ?) OR (sender_ID = ? AND receiver_ID = ?) ORDER BY msg_id ASC";
+    $messages_query = "SELECT uc.msg_id, uc.sender_ID, uc.receiver_ID, uc.msg_content, uc.msg_image, uc.msg_date,
+                 u1.user_name AS sender_name, u2.user_name AS receiver_name
+          FROM users_chats uc
+          JOIN users u1 ON uc.sender_ID = u1.user_id
+          JOIN users u2 ON uc.receiver_ID = u2.user_id
+          WHERE (uc.sender_ID = ? AND uc.receiver_ID = ?) OR (uc.sender_ID = ? AND uc.receiver_ID = ?)
+          ORDER BY uc.msg_date ASC";
+
     $stmt = $con->prepare($messages_query);
     $stmt->bind_param("iiii", $user_id, $receiver_id, $receiver_id, $user_id);
     $stmt->execute();
@@ -113,7 +120,7 @@ if (isset($_POST['logout'])) {
                 <ul id="message-container">
                 <?php foreach ($messages as $message): ?>
                     <div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
-                        <span><?php echo $message['sender_ID'] == $user_id ? 'You' : 'User ' . $message['sender_ID']; ?> 
+                        <span><?php echo $message['sender_ID'] == $user_id ? 'You' : $message['sender_name']; ?> 
                             <small><?php echo $message['msg_date']; ?></small></span>
                         <p class="message-content"><?php echo $message['msg_content']; ?></p>
                         <?php if ($message['sender_ID'] == $user_id): ?>
