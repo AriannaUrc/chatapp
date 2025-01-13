@@ -347,10 +347,30 @@ function editMessage(messageId, currentMessage) {
 
 // Delete message function
 function deleteMessage(messageId) {
+    // Get the message element to check if it contains an image
+    const messageElement = document.getElementById('message-' + messageId);
+    const imgElement = messageElement.querySelector('#message-img');
+
+    // Check if the message has an image
+    let fileName = null;
+    if (imgElement) {
+        const imgSrc = imgElement.src;
+        // Extract the file name from the image source
+        fileName = imgSrc.substring(imgSrc.lastIndexOf('/') + 1);  // Get the file name from the URL
+    }
+
+    // Confirm the deletion
     if (confirm('Are you sure you want to delete this message?')) {
+        // Emit delete message event to the server
         socket.emit('delete_message', { message_id: messageId, sender_id: userId, receiver_id: receiverId });
+
+        // If the message contains a file, emit the delete file event
+        if (fileName) {
+            socket.emit('delete_file', { name: fileName });
+        }
     }
 }
+
 
 // Handle edit message update from server
 socket.on('edit_message', (data) => {

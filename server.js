@@ -98,6 +98,36 @@ io.on('connection', (socket) => {
         });
     });
 
+    // Listen for the 'delete_file' event from the client
+    socket.on('delete_file', (data) => {
+        const fileName = data.name;
+
+        // Create the file path using the file name
+        const filePath = path.join(__dirname, 'uploads', fileName);
+
+        // Check if the file exists
+        fs.access(filePath, fs.constants.F_OK, (err) => {
+            if (err) {
+                console.error('File not found:', err);
+                // Optionally, notify the client that the file does not exist
+                socket.emit('file_deleted', { success: false, message: 'File not found' });
+            } else {
+                // If the file exists, delete it
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error('Error deleting the file:', err);
+                        // Handle the error accordingly (e.g., send a response to the client)
+                        socket.emit('file_deleted', { success: false, message: 'Error deleting file' });
+                    } else {
+                        console.log('File successfully deleted!');
+                        // Notify the client that the file was successfully deleted
+                        socket.emit('file_deleted', { success: true, fileName });
+                    }
+                });
+            }
+        });
+    });
+
     // Send a message to the receiver
     socket.on('send_message', (data) => {
         console.log('Received message:', data);
