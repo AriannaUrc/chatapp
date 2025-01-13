@@ -109,7 +109,20 @@ if (isset($_POST['logout'])) {
                     <div class="right-header-detail">
                         <form method="POST">
                             <p>Logged in as: <?php echo $user_name; ?></p>
-                            <span><?php echo count($messages); ?> messages</span>
+                            <span>
+                                
+<script>
+// Get the message count element and initialize it
+let messageCount = <?php echo count($messages); ?>;
+const messageCountElement = document.querySelector('.right-header-detail span');
+
+// Function to update the message count in the UI
+function updateMessageCount() {
+    messageCountElement.textContent = `${messageCount} messages`;
+                          
+}</script>                  
+
+                            <?php echo count($messages); ?> messages</span>
                             <button name="logout" class="btn btn-danger">Logout</button>
                         </form>
                     </div>
@@ -272,6 +285,7 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
         img: fileName // Will be used for the file name
     });
 
+
     // Clear input fields and image preview
     document.getElementById('message-input').value = '';
     document.getElementById('message-file').value = '';
@@ -340,6 +354,10 @@ socket.on('receive_message', (data) => {
 
     // Log the scroll values after the update
     //console.log('After scroll: scrollTop:', messageContainer.scrollTop, 'scrollHeight:', messageContainer.scrollHeight);
+    
+    // Increment the message count when a message is sent
+    messageCount++;
+    updateMessageCount();
 
 });
 
@@ -382,6 +400,10 @@ function deleteMessage(messageId) {
             socket.emit('delete_file', { name: fileName });
         }
     }
+
+    // Increment the message count when a message is sent
+    messageCount--;
+    updateMessageCount();
 }
 
 
