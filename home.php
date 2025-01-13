@@ -132,7 +132,7 @@ function updateMessageCount() {
             <div class="right-header-contentChat">
                 <ul id="message-container">
                 <?php foreach ($messages as $message): ?>
-                    <hr><br><div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
+                    <br><div class="rightside-chat" id="message-<?php echo $message['msg_id']; ?>" data-message-id="<?php echo $message['msg_id']; ?>">
                         <span><?php echo $message['sender_ID'] == $user_id ? 'You' : $message['sender_name']; ?> 
                             <small><?php echo $message['msg_date']; ?></small></span>
                         <?php // Get the document root of the web server
@@ -331,7 +331,7 @@ socket.on('receive_message', (data) => {
 
     // Use the sender's username and message content in the message element
     messageElement.innerHTML = `
-        <hr><br><span>${data.sender_id === userId ? 'You' : data.sender_name} <small>${data.msg_date}</small></span>
+        <br><span>${data.sender_id === userId ? 'You' : data.sender_name} <small>${data.msg_date}</small></span>
         ${tmp}
         <p class="message-content">${data.message}</p>
         ${data.sender_id === userId ? `
