@@ -246,14 +246,6 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
         fileName = file.name;  // Update the file name if a file is selected
     }
 
-    // Emit the message along with the file (if any)
-    socket.emit('send_message', {
-        sender_id: userId,
-        receiver_id: receiverId,
-        message: messageContent,
-        img: fileName // Will be used for the file name
-    });
-
     // If a file is selected, send it via a separate socket event
     if (file) {
         const reader = new FileReader();
@@ -268,6 +260,14 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
         };
         reader.readAsDataURL(file);  // Convert the file to Base64
     }
+
+
+    socket.emit('send_message', {
+        sender_id: userId,
+        receiver_id: receiverId,
+        message: messageContent,
+        img: fileName // Will be used for the file name
+    });
 
     // Clear input fields and image preview
     document.getElementById('message-input').value = '';
@@ -286,6 +286,7 @@ function wait(milliseconds) {
 // Handle message reception
 socket.on('receive_message', (data) => {
     
+    console.log(data.img);
     const messageContainer = document.getElementById('message-container');
 
     // Create the message element
@@ -301,7 +302,7 @@ socket.on('receive_message', (data) => {
     // Construct the full path to the image
     const imageUrl = baseUrl + '/uploads/' + data.img;
 
-    console.log(data.img)
+    console.log(data.img);
 
     // Initialize tmp to an empty string
     let tmp = '';

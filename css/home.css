@@ -20,7 +20,7 @@
 }
 
 .form-control, .search-icon, .search-icon:hover {
-    background-color: #6A6C75;
+    background-color: #a9acb9;
     border: 1px solid #fff;
     color: #fff;
     box-shadow: none !important;
@@ -114,7 +114,7 @@
 
 .right-header-detail p {
     margin: 0px;
-    color: #000;
+    color: #ffffff;
     font-weight: bold;
     padding-top: 5px;
 }
@@ -282,7 +282,7 @@
 
 .user-name {
     font-weight: bold;
-    color: #333;
+    color: #ffffff;
 }
 
 .user-status {

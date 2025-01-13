@@ -132,7 +132,7 @@ io.on('connection', (socket) => {
                     sender_name: senderName,  // Add the sender's username
                     receiver_id: data.receiver_id,
                     message: data.message,
-                    img: data,
+                    img: data.img,
                     msg_date
                 };
 
@@ -144,7 +144,6 @@ io.on('connection', (socket) => {
                     console.log(`User ${data.receiver_id} is not connected`);
                 }
 
-                wait(100);
                 // Also send the message to the sender (for immediate UI update)
                 io.to(users[data.sender_id]).emit('receive_message', messageToSend);
             });
