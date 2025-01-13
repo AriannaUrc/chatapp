@@ -66,18 +66,6 @@ CREATE TABLE `users_chats` (
 -- Dumping data for table `users_chats`
 --
 
-INSERT INTO `users_chats` (`msg_id`, `sender_ID`, `receiver_ID`, `msg_content`, `msg_image`, `msg_date`) VALUES
-(1, 4, 5, 'test', NULL, '2025-01-12 17:06:18'),
-(2, 5, 4, 'test1', NULL, '2025-01-12 17:41:58'),
-(3, 4, 5, 'yes', NULL, '2025-01-12 17:42:04'),
-(4, 5, 4, 'yep', NULL, '2025-01-12 17:48:42'),
-(5, 4, 5, 'yepp', NULL, '2025-01-12 17:48:52'),
-(6, 4, 5, 'ok', NULL, '2025-01-12 17:53:14'),
-(7, 5, 4, 'ok?', NULL, '2025-01-12 17:53:26'),
-(8, 4, 5, 'yeah', NULL, '2025-01-12 17:58:10'),
-(9, 5, 4, 'so you are useless?', NULL, '2025-01-12 17:58:21'),
-(10, 5, 4, 'hello', NULL, '2025-01-12 18:16:25'),
-(11, 4, 5, 'arriva?', NULL, '2025-01-12 18:16:41');
 
 -- --------------------------------------------------------
 
