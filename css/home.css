@@ -35,7 +35,7 @@
 }
 
 .left-chat {
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 80%;
 }
 
@@ -324,6 +324,17 @@
     align-items: center;
     justify-content: space-between;
 }
+
+#image-preview-container {
+    position: absolute;  /* Position absolutely within the parent container */
+    bottom: 10px;        /* Keep it at the bottom */
+    right: 10px;         /* Place it towards the right side of the container */
+    max-width: 200px;    /* Set a max width for the image */
+    display: none;       /* Initially hidden */
+    z-index: 10;         /* Ensure it's on top of other elements */
+}
+
+
 
 
 

@@ -65,7 +65,7 @@ if (isset($_POST['logout'])) {
 <body>
     <div class="container">
         <div class="row">
-        <div class="left-sidebar">
+        <div class="left-sidebar col-md-3 col-sm-3 col-xs-12">
             <!-- Add New User by Email -->
             <div class="input-group searchbox">
                 <form method="POST" action="add_contact.php">
@@ -146,7 +146,7 @@ if (isset($_POST['logout'])) {
             
 
             <!-- Image preview container -->
-            <div id="image-preview-container" style="display: none; position: relative; margin-top: 10px;">
+            <div id="image-preview-container" style="display: none; position: sticky; bottom: 10px; margin-top: 10px;">
                     <img id="image-preview" src="" alt="Image preview" style="max-width: 200px; margin-top: 10px; border: 1px solid #ccc; padding: 5px;">
                     <!-- Close button (X) -->
                     <button type="button" id="remove-image" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 50%; padding: 5px; font-size: 12px;">
@@ -197,12 +197,13 @@ fileInput.addEventListener('change', function(event) {
     }
 });
 
-// Add event listener to the remove button to clear the image preview
 removeImageButton.addEventListener('click', function() {
-    imagePreview.src = ''; // Clear the image preview
-    imagePreviewContainer.style.display = 'none'; // Hide the preview container
-    fileInput.value = ''; // Clear the file input
-});
+    imagePreview.src = '';  // Clear the image preview
+    imagePreviewContainer.style.display = 'none';  // Hide the preview container
+    fileInput.value = '';  // Clear the file input
+    fileName = "no1";  // Reset the fileName to default value, so no image is sent
+});// Add event listener to the remove button to clear the image preview
+
 </script>
 
 <!-- Include Socket.io client -->
@@ -324,10 +325,22 @@ socket.on('receive_message', (data) => {
             <button class="delete-button" onclick="deleteMessage(${data.message_id})">Delete</button>
         ` : ''}
     `;
+
+    // Log scroll values for debugging
+    //console.log('Before scroll: scrollTop:', messageContainer.scrollTop, 'scrollHeight:', messageContainer.scrollHeight);
     
     // Append the new message to the container and scroll to the bottom
     messageContainer.appendChild(messageElement);
-    messageContainer.scrollTop = messageContainer.scrollHeight;
+    
+    
+    // Use requestAnimationFrame to ensure rendering happens before scroll
+    requestAnimationFrame(() => {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    });
+
+    // Log the scroll values after the update
+    //console.log('After scroll: scrollTop:', messageContainer.scrollTop, 'scrollHeight:', messageContainer.scrollHeight);
+
 });
 
 
