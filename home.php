@@ -243,7 +243,9 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
     const file = fileInput.files[0];
 
     if (file) {
-        fileName = file.name;  // Update the file name if a file is selected
+        // Create a unique file name using timestamp
+        const timestamp = Date.now();
+        fileName = `${timestamp}-${file.name}`;  // Prefix the original file name with a timestamp
     }
 
     // If a file is selected, send it via a separate socket event
@@ -254,7 +256,7 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
 
             // Emit the file upload event
             socket.emit('upload_file', {
-                name: file.name,          // The filename of the image
+                name: fileName,          // The filename of the image
                 img_base64: base64Image   // The Base64-encoded image data
             });
         };
