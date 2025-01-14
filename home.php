@@ -305,6 +305,7 @@ socket.on('receive_message', (data) => {
     
     console.log(data.img);
     const messageContainer = document.getElementById('message-container');
+    const messageScroll = document.getElementsByClassName('right-header-contentChat')[0];
 
     // Create the message element
     const messageElement = document.createElement('div');
@@ -341,19 +342,18 @@ socket.on('receive_message', (data) => {
     `;
 
     // Log scroll values for debugging
-    //console.log('Before scroll: scrollTop:', messageContainer.scrollTop, 'scrollHeight:', messageContainer.scrollHeight);
+    console.log('Before scroll: scrollTop:', messageScroll.scrollTop, 'scrollHeight:', messageScroll.scrollHeight);
     
     // Append the new message to the container and scroll to the bottom
     messageContainer.appendChild(messageElement);
     
     
     // Use requestAnimationFrame to ensure rendering happens before scroll
-    requestAnimationFrame(() => {
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-    });
+    messageScroll.scrollTop = messageScroll.scrollHeight;
+
 
     // Log the scroll values after the update
-    //console.log('After scroll: scrollTop:', messageContainer.scrollTop, 'scrollHeight:', messageContainer.scrollHeight);
+    console.log('After scroll: scrollTop:', messageScroll.scrollTop, 'scrollHeight:', messageScroll.scrollHeight);
     
     // Increment the message count when a message is sent
     messageCount++;
