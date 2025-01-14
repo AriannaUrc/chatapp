@@ -359,6 +359,11 @@ socket.on('receive_message', (data) => {
     messageCount++;
     updateMessageCount();
 
+    if(data.sender_id === userId){
+        wait(200);
+        fileInput.value = '';  // Clear the file input
+        fileName = "no1";  // Reset the fileName to default value, so no image is sent
+    }
 });
 
 
@@ -400,10 +405,6 @@ function deleteMessage(messageId) {
             socket.emit('delete_file', { name: fileName });
         }
     }
-
-    // Increment the message count when a message is sent
-    messageCount--;
-    updateMessageCount();
 }
 
 
@@ -421,6 +422,10 @@ socket.on('delete_message', (data) => {
     if (messageElement) {
         messageElement.remove();
     }
+
+    // Increment the message count when a message is sent
+    messageCount--;
+    updateMessageCount();
 });
 </script>
 </body>
